@@ -31,33 +31,37 @@ class SweetTooth_ActionListener
      */
     public function onOrderStatusComplete($order_id)
     {
-        $order = new WC_Order($order_id);
-        $customer_id = $order->user_id;
-        $customer = array();
-        
-        if (empty($customer_id)){
-            /**
-             * This was as Guest checkout.
-             * We'll use billing info to identify the customer.
-             */
-             $customer['first_name'] = $order->billing_first_name;
-             $customer['last_name'] = $order->billing_last_name;
-             $customer['email'] = $order->billing_email;
-
-        } else {
-            /**
-             * The customer has an account with us.
-             */
-             $user = get_user_by('id', $customer_id);
-             $customer['external_id'] = $customer_id;
-             $customer['first_name'] = $user->first_name;
-             $customer['last_name'] = $user->last_name;
-             $customer['email'] = $user->user_email;
+        try {
+            $order = new WC_Order($order_id);
+            $customer_id = $order->user_id;
+            $customer = array();
+            
+            if (empty($customer_id)){
+                /**
+                 * This was as Guest checkout.
+                 * We'll use billing info to identify the customer.
+                 */
+                 $customer['first_name'] = $order->billing_first_name;
+                 $customer['last_name'] = $order->billing_last_name;
+                 $customer['email'] = $order->billing_email;
+    
+            } else {
+                /**
+                 * The customer has an account with us.
+                 */
+                 $user = get_user_by('id', $customer_id);
+                 $customer['first_name'] = $user->first_name;
+                 $customer['last_name'] = $user->last_name;
+                 $customer['email'] = $user->user_email;
+            }
+    
+            $response = $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
+            error_log("Order event sent to ST servers! " . $response);
+            
+        } catch (Exception $e) {
+            error_log("Problem sending order event to ST servers. " . $e->getMessage());
         }
-
-        $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
-        error_log("Order event sent!");
-        
+                
         return $this;
     }
     

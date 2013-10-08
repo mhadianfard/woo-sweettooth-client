@@ -53,13 +53,13 @@ class SweetTooth_ApiClient
     /**
      * Sends an event of a specific type to the Sweet Tooth Api
      * 
+     * @throws Exception. If there's a problem with the transition.
      * @param string $event_type. Represents the type of event expected on the server.
-     * @param array $customer {
+     * @param array|int $customer. Either remote customer id or customer array {
      *     Array representing the customer this event affects.
-     *         @type type $key 'external_id'. Accepts string. WooCommerce Id of the customer.
-     *         @type type $key 'first_name'. Accepts string.
-     *         @type type $key 'last_name'. Accepts string.
-     *         @type type $key 'email'. Accepts string.     
+     *         @type type $key 'first_name' (optional). Accepts string.
+     *         @type type $key 'last_name' (optional). Accepts string.
+     *         @type type $key 'email' (optional). Accepts string.
      *     }      
      * @param array|int|string $data (optional). Generic data to send with the event.
      * @param string $external_id (optional). The WooCommerce Id of the event or dataset to be sent. 
@@ -68,14 +68,18 @@ class SweetTooth_ApiClient
      *         @type type $value. Accepts string.        
      * }
      * 
-     * @return SweetTooth_ApiClient
+     * @return array containing server response
      */
-    public function sendEvent($event_type, $customer = null, $data = null, $external_id = null, $sources = null)
+    public function sendEvent($event_type, $customer, $data = null, $external_id = null, $sources = null)
     {
         if (empty($event_type)){
             throw Exception ('Missing event type');
         }
 
+        // Start building out our event array
+        $event = array('event_type'   => $event_type);
+
+        
         // Data must be an array, even if it's empty.
         if (empty($data)){
             $data = array();
@@ -91,26 +95,37 @@ class SweetTooth_ApiClient
         } else {
             $data = array($data);
         }
-
-        // Always send full customer details.
+        
+        $event['data'] = $data;
+        
+        
+        // Send full customer details or remote customer id
         if (empty($customer)){
             /**
              * @todo. Build customer array.
              */
             throw Exception ('Missing customer');
+            
+        } elseif (is_object($customer)){
+            if (method_exists($customer, 'toArray')){
+                $customer = $customer->toArray();
+            
+            } else {
+                $customer = (array) $customer;
+            }
         }
-        
-        // Prepare event with whatever we do have.
-        $event = array (
-                    'event_type'   => $event_type,
-                    'data'         => $data,
-                    'customer'     => $customer
-                );
-        
+
+        if (is_array($customer)){
+            $event['customer'] = $customer;
+        } else {
+            $event['customer_id'] = $customer;
+        }
+
+       
         if (!empty($external_id)){
             $event['external_id'] = $external_id;
         }
-        
+                
         if (!empty($sources)) {
             if (!is_array($sources)){
                 $sources = array($sources);
@@ -118,9 +133,7 @@ class SweetTooth_ApiClient
             $event['sources'] = $sources;
         }
         
-        $this->getRestClient()->post('/events', $event);
-        
-        return $this;
+        return $this->getRestClient()->post('/events', $event);        
     }
 }
 ?>
