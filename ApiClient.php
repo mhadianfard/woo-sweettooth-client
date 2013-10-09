@@ -53,7 +53,7 @@ class SweetTooth_ApiClient
     /**
      * Sends an event of a specific type to the Sweet Tooth Api
      * 
-     * @throws Exception. If there's a problem with the transition.
+     * @throws Exception. If there's a problem with the transmission.
      * @param string $event_type. Represents the type of event expected on the server.
      * @param array|int $customer. Either remote customer id or customer array {
      *     Array representing the customer this event affects.
@@ -134,6 +134,22 @@ class SweetTooth_ApiClient
         }
         
         return $this->getRestClient()->post('/events', $event);        
+    }
+    
+    /**
+     * Accesses the server to get customer data for the specified email address.
+     * Note that accessing customer information by email is not very safe since the customer
+     * can change their email address at any time. The best way to do this is to keep a
+     * remote customer_id available locally for each customer.
+     * Looking up customers by their ID on the Sweet Tooth server is the safest route to take.
+     *  
+     * @throws Exception. If there's a problem with the transmission. 
+     * @param string $email
+     * @return array response
+     */
+    public function getCustomerByEmail($email)
+    {
+        return $this->getRestClient()->get("/customers/{$email}"); 
     }
 }
 ?>

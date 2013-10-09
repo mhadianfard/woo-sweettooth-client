@@ -56,7 +56,12 @@ class SweetTooth_ActionListener
             }
     
             $response = $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
-            error_log("Order event sent to ST servers! " . $response);
+            
+            /**
+             * Debug statement for sending events.
+             * @toodo Take out.
+             */
+            error_log("Order event sent to ST servers! \nResponse:" . print_r($response, true));
             
         } catch (Exception $e) {
             error_log("Problem sending order event to ST servers. " . $e->getMessage());
