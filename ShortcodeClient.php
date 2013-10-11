@@ -94,7 +94,7 @@ class SweetTooth_ShortcodeClient
            }
            
            // Build the options HTML
-           $optionsHtml = "<form onsubmit='submitRedemption(); return false;'>";
+           $optionsHtml = "<form id='{$form_id}' onsubmit='submitRedemption(); return false;'>";
            foreach ($redemptionOptions as $index => $option){
                $optionsHtml .= "<label>
                                    <input type='radio' name='{$options_name}' class='{$options_class}' value=\"{$index}\" data-points-redemption=\"{$option['points_redemption']}\" />
@@ -110,7 +110,7 @@ class SweetTooth_ShortcodeClient
                return $optionsHtml;
            }
            
-           return "<div id=\"{$wrapper_id}\">{$optionsHtml}</div>";           
+           return "<div id='{$wrapper_id}'>{$optionsHtml}</div>";           
        }
    }
       

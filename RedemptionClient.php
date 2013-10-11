@@ -63,10 +63,17 @@ class SweetTooth_RedemptionClient
     }
     
     /**
-     * Ajax Entery Point...
+     * Ajax entery point to redeem a selected option coming from the http param "selected".
+     * This will first double check the customer's balance and validate the selected redemption option.
+     * Then we deduct points from their account,
+     * once that is done, we create a copuon code and send it back in the response.
+     * 
+     * @return string http response.
      */
     public function redeemAction()
     {
+        $response = array();
+        
         try {
             if (!isset($_REQUEST['selected'])){
                 throw new Exception("Please select a redemption option first.");
@@ -92,9 +99,17 @@ class SweetTooth_RedemptionClient
                 throw new Exception("Unable to deduct points from your Sweet Tooth account.");
             }                    
             
-        } catch (Exception $e){
+            $couponCode = $this->createCopoun($redemptionOptions[$selectedOption]);
             
+            $response['success'] = true;
+            $response['couponCode'] = $couponCode;
+            
+        } catch (Exception $e){
+            $response['success'] = false;
+            $response['message'] = $e->getMessage();
         }
+
+        echo json_encode($response);
         
         die();
     }
@@ -201,6 +216,43 @@ class SweetTooth_RedemptionClient
             error_log("Problem creating a redemption option. " . $e->getMessage());
             return false;            
         }
+    }
+    
+    
+    public function createCopoun($redemptionOption)
+    {
+        // Coupon Code is a function of the current system time
+        $coupon_code = base64_encode(time());                
+        
+        $amount = $redemptionOption['coupon_amount'];
+        $discount_type = $redemptionOption['discount_type'];        
+        $coupon = array(
+                'post_title'     => $coupon_code,
+                'post_content'   => $redemptionOption['option_label'],
+                'post_status'    => 'publish',
+                'post_author'    => 1,
+                'post_type'		 => 'shop_coupon'
+        );
+        
+        $new_coupon_id = wp_insert_post( $coupon );
+        
+        // Add meta
+        update_post_meta( $new_coupon_id, 'discount_type', $discount_type );
+        update_post_meta( $new_coupon_id, 'coupon_amount', $amount );
+        update_post_meta( $new_coupon_id, 'individual_use', 'no' );
+        update_post_meta( $new_coupon_id, 'usage_limit', 1 );        
+        update_post_meta( $new_coupon_id, 'product_ids', '' );
+        update_post_meta( $new_coupon_id, 'exclude_product_ids', '' );
+        update_post_meta( $new_coupon_id, 'expiry_date', '' );
+        update_post_meta( $new_coupon_id, 'apply_before_tax', 'yes' );
+        update_post_meta( $new_coupon_id, 'free_shipping', 'no' );
+        
+        // Override options with anything else which was explicitly mentioned
+        foreach ($redemptionOption['coupon_options'] as $option => $value){
+            update_post_meta( $new_coupon_id, $option, $value );
+        }
+        
+        return $coupon_code;
     }
     
     /**
