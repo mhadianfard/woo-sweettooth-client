@@ -67,7 +67,35 @@ class SweetTooth_RedemptionClient
      */
     public function redeemAction()
     {
-        echo "Ajax Response";
+        try {
+            if (!isset($_REQUEST['selected'])){
+                throw new Exception("Please select a redemption option first.");
+            }
+            
+            $sweettooth = SweetTooth::getInstance();
+            $customerBalance = $sweettooth->getCustomerBalance();
+            $redemptionOptions = $this->getEligibleRedemptionOptions($customerBalance);
+            $selectedOption = $_REQUEST['selected'];
+            
+            if (!array_key_exists($selectedOption, $redemptionOptions)){
+                throw new Exception("You are not elligble for the selected option.");
+            }
+            
+            $remoteCustomerId = $sweettooth->getCustomerRemoteId();
+            $pointsToDeduct = (-1) * intval($redemptionOptions[$selectedOption]['points_redemption']);
+            try {
+                $reponse = $sweettooth->getApiClient()->addPointsTransaction($remoteCustomerId,  $pointsToDeduct);
+                
+            } catch (Exception $e){
+                // Original exception probably contains data we can't share with the customer. Throw another one.
+                error_log("Couldn't create a points transfer. " . $e->getMessage());
+                throw new Exception("Unable to deduct points from your Sweet Tooth account.");
+            }                    
+            
+        } catch (Exception $e){
+            
+        }
+        
         die();
     }
         

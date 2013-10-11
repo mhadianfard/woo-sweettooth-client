@@ -57,6 +57,13 @@ class SweetTooth_ActionListener
     
             $response = $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
             
+            if (!empty($customer_id) && isset($response['customer_id'])) {
+               /**
+                * @todo Great idea to save the remote customer id somewhere locally so we can do redemptions with one API call.
+                *         $response['customer_id'] will contain the customer id on Sweet Tooth servers.
+                */
+            }
+            
             /**
              * Debug statement for sending events.
              * @toodo Take out.

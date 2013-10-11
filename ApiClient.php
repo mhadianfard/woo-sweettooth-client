@@ -151,5 +151,24 @@ class SweetTooth_ApiClient
     {
         return $this->getRestClient()->get("/customers/{$email}"); 
     }
+    
+    /**
+     * Accesses the server to add a points transaction to the specified customer.
+     * @param string $remote_customer_id. The ID of the customer on the Sweet Tooth server. 
+     * @param int $points_change. Positive or negative whole number to change the customer's points balance by.
+     * @param string $status (optional). "completed" (default), or "pending". Positive pending points don't affect the customer's balance. 
+     * @param array $data (optional), any additional data to send along with the request.
+     * 
+     * @return array response.
+     * @throws Exception if there's a problem creating this transaction.
+     */
+    public function addPointsTransaction($remote_customer_id, $points_change, $status = "completed", $data = array())
+    {
+        return $this->getRestClient()->post("/customers/{$remote_customer_id}/points_transactions", array(
+                    'points_change'   => $points_change,
+                    'status'          => $status,
+                    'data'            => $data
+        ));
+    }
 }
 ?>

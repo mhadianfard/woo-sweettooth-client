@@ -50,11 +50,11 @@ class SweetTooth
     protected $_redemptionClient = null;
     
     /**
-     * Stores the customerPointsBalance once available.
-     * @var null|boolean|int
+     * Stores the remote customer data if available
+     * @var null|boolean|array
      * @see SweetTooth::getCustomerBalance()
      */
-    protected $_customerPointsBalance = null;
+    protected $_remoteCustomerData = null;
     
     
     /**
@@ -159,25 +159,56 @@ class SweetTooth
     
     /**
      * Accesses the Sweet Tooth server to get a points balance for the logged in customer.
+     * @see SweetTooth::getRemoteCustomerData()
      *
-     * Note that polling the server for a points balance too frequently is not very efficient.
+     * @return boolean|int. Customer's points balance if one is available. Boolean false otherwise.
+     */    
+    public function getCustomerBalance()
+    {
+        $customerData = $this->getRemoteCustomerData();
+        if ($customerData === false || !isset($customerData['points_balance'])){
+            return false;
+        }     
+
+        return intval($customerData['points_balance']);            
+    }
+    
+    /**
+     * Accesses the Sweet Tooth server to get a remtote customer ID for the logged in customer.
+     * @see SweetTooth::getRemoteCustomerData()
+     *
+     * @return boolean|string. Customer's remote ID one is available. Boolean false otherwise.
+     */
+    public function getCustomerRemoteId()
+    {
+        $customerData = $this->getRemoteCustomerData();
+        if ($customerData === false || !isset($customerData['id'])){
+            return false;
+        }
+    
+        return $customerData['id'];
+    }    
+
+    /**
+     * Accesses the Sweet Tooth server to get any information about the customer
+     *
+     * Note that polling the server for customer data too frequently is not very efficient.
      * If you're expecting to do this often, you should implement a caching system
      * to reduce the number of calls to the server.
-     * 
-     * @return boolean|int. Customer's points balance if one is available. Boolean false otherwise.
+     *
+     * @return boolean|array. Customer data if one is available. Boolean false otherwise.
      */
-    public function getCustomerBalance()
+    public function getRemoteCustomerData()
     {   
         // Make sure we call the server only once during the current http request.
-        if (is_null($this->_customerPointsBalance)){
-            
+        if (is_null($this->_remoteCustomerData)){            
             /**
              * Debug statement to keep track of calls to the server.
              * @todo Take out
              */
-            error_log("Getting points balance from server...");
+            error_log("Gettting customer data from server...");
             
-            $this->_customerPointsBalance = false;            
+            $this->_remoteCustomerData = false;            
             try {
                 $currentUser = wp_get_current_user();
                 $currentUserId = $currentUser->ID;
@@ -188,19 +219,16 @@ class SweetTooth
                     if (empty($email)){
                         throw new Exception("No email address for current customer.");
                     }
-        
-                    $customerData = $this->getApiClient()->getCustomerByEmail($email);        
-                    if (isset($customerData['points_balance'])){
-                        $this->_customerPointsBalance = intval($customerData['points_balance']);
-                    }
+                            
+                    $this->_remoteCustomerData = $this->getApiClient()->getCustomerByEmail($email);                    
                 }
         
             } catch (Exception $e){
-                error_log("Problem loading customer balance. " . $e->getMessage());
+                error_log("Problem loading customer data. " . $e->getMessage());
             }
         }
     
-        return $this->_customerPointsBalance;
+        return $this->_remoteCustomerData;
     }
 }
 
