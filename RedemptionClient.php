@@ -52,7 +52,25 @@ class SweetTooth_RedemptionClient
 
         return $this;
     }
+        
+    /**
+     * Public constructor
+     */
+    public function __construct()
+    {
+        // Setup Ajax Action
+        add_action('wp_ajax_sweettooth_customer_coupon_redemption', array($this, 'redeemAction'));
+    }
     
+    /**
+     * Ajax Entery Point...
+     */
+    public function redeemAction()
+    {
+        echo "Ajax Response";
+        die();
+    }
+        
     /**
      * Based on the $availablePointsToSpend, return an array of redemption options which we have enough points to spend towards.    
      * @return array of redemption options.
