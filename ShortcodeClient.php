@@ -16,6 +16,7 @@ class SweetTooth_ShortcodeClient
    {
        // Use "[sweettooth_customer_points_balance]" shortcode to generate the points balance
        add_shortcode( 'sweettooth_customer_points_balance', array($this, 'getCustomerBalance'));
+       add_shortcode( 'sweettooth_customer_coupon_redemption', array($this, 'getCouponRedemptionBlock') );
               
        return $this;
    }
@@ -33,16 +34,50 @@ class SweetTooth_ShortcodeClient
    public function getCustomerBalance($atts)
    {
       extract( shortcode_atts( array(
-               'default' => 'N/A',
-               'label' => "Points"
+               'no_login'     => 'Please login to see see your points balance.',
+               'zero_points'  => '',
+               'label'        => "Points"
       ), $atts ) );
        
       $balance = $this->_getSweetToothClient()->getCustomerBalance();
-      if (!is_null($balance)){
-          return "{$balance} {$label}";    
+      
+      if ($balance === false) {
+          return $no_login;         
       }
       
-      return $default;
+      if ($balance == 0 && !empty($zero_points)){
+          return $zero_points;
+      }
+      
+      return "{$balance} {$label}";
+   }
+   
+   public function getCouponRedemptionBlock($atts)
+   {
+       extract( shortcode_atts( array(
+               'no_login'     => 'Please login to see some redemption options.',
+               'no_options'   => "You don't have any redemption options at this point."
+       ), $atts ) );
+       
+       $balance = $this->_getSweetToothClient()->getCustomerBalance();
+       if ($balance === false){
+           return $no_login;
+           
+       } else {
+           $redemptionOptions = $this->_getSweetToothClient()->getRedemptionClient()->getEligibleRedemptionOptions($balance);
+       }
+       
+       if (empty($redemptionOptions)){
+           return $no_options;
+           
+       } else {
+           $optionsHtml = "";
+           foreach ($redemptionOptions as $index => $option){
+               $optionsHtml .= "[{$index}] {$option['option_label']} <i>(costs {$option['points_redemption']} Points)</i><br/>";
+           }
+           
+           return $optionsHtml;
+       }
    }
       
    /**

@@ -43,18 +43,40 @@ class SweetTooth
     protected $_shortcodeClient = null;
     
     /**
+     * Stores a singleton refrence to the redemption client object
+     * @var SweetTooth_RedemptionClient
+     * @see SweetTooth::getRedemptionClient()
+     */
+    protected $_redemptionClient = null;
+    
+    /**
+     * Stores the customerPointsBalance once available.
+     * @var null|boolean|int
+     * @see SweetTooth::getCustomerBalance()
+     */
+    protected $_customerPointsBalance = null;
+    
+    
+    /**
      * Protected constructor to enforce singleton pattern for this class.
      * 
      * @see SweetTooth::getInstance()
      * @access protected
      */
-    protected function __construct()
+    protected function __construct() {}
+    
+    /**
+     * Makes sure all components of the Sweet Tooth client are initialized and ready to go.
+     * 
+     * @return SweetTooth
+     */
+    protected function _setupSweetToothClient()
     {
-        /**
-         * Setup Actions,
-         */
         $this->getActionListener()->setupActions();
         $this->getShortcodeClient()->setupShortcodes();
+        $this->getRedemptionClient()->setupRedemptionOptions();
+
+        return $this;
     }
         
     /**
@@ -102,6 +124,23 @@ class SweetTooth
         
         return $this->_shortcodeClient;
     }
+
+    /**
+     * Get the singleton Redemption Client.
+     * The Redemption Client is responsible for setting up and providing redemption options
+     * based on available features supported in WooCommerce and it's coupon system.    
+     *
+     * @return SweetTooth_RedemptionClient
+     */
+    public function getRedemptionClient()
+    {
+        if (!isset($this->_redemptionClient)){
+            $this->_redemptionClient = new SweetTooth_RedemptionClient();
+        }
+    
+        return $this->_redemptionClient;
+    }
+    
     
     /**
      * Get's the singleton instance of the SweetTooth object.
@@ -112,6 +151,7 @@ class SweetTooth
     {
         if (!isset(SweetTooth::$_instance)){
             SweetTooth::$_instance = new SweetTooth();
+            SweetTooth::$_instance->_setupSweetToothClient();
         }
         
         return SweetTooth::$_instance;
@@ -124,12 +164,12 @@ class SweetTooth
      * If you're expecting to do this often, you should implement a caching system
      * to reduce the number of calls to the server.
      * 
-     * @return null|int. Customer's points balance if one is available. Null otherwise.
+     * @return boolean|int. Customer's points balance if one is available. Boolean false otherwise.
      */
     public function getCustomerBalance()
     {   
         // Make sure we call the server only once during the current http request.
-        if (!isset($this->_customerPointsBalance)){
+        if (is_null($this->_customerPointsBalance)){
             
             /**
              * Debug statement to keep track of calls to the server.
@@ -137,13 +177,13 @@ class SweetTooth
              */
             error_log("Getting points balance from server...");
             
-            $this->_customerPointsBalance = null;            
+            $this->_customerPointsBalance = false;            
             try {
                 $currentUser = wp_get_current_user();
-                $userId = $currentUser->ID;
-                if (!empty( $currentUser->ID )){
-                    // If there's someone logged in right now
-        
+                $currentUserId = $currentUser->ID;
+                
+                // If there's someone logged in right now
+                if (!empty( $currentUserId )){        
                     $email = $currentUser->user_email;
                     if (empty($email)){
                         throw new Exception("No email address for current customer.");

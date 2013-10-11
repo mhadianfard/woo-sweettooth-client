@@ -36,6 +36,7 @@ function init_sweettooth() {
             include_once ( 'ApiClient.php' );
             include_once ( 'ActionListener.php' );
             include_once ( 'ShortcodeClient.php' );
+            include_once ( 'RedemptionClient.php' );
                     
             // Additional reference to SweetTooth singleton object on the GLOBALS array.  
             $GLOBALS['sweettooth'] = SweetTooth::getInstance();                
