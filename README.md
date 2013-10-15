@@ -50,7 +50,7 @@ Support
 -----------
 This plugin is released as an open-source project and not actively maintained by [Sweet Tooth Inc.](http://www.sweettoothhq.com) or anyone else except for the open-source community.
 
-<a name="Technologies" style="color: black">Technologies</a>
+Technologies
 -------------------------------------------------
 **Libraries Used:**
 
