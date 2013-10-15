@@ -34,9 +34,10 @@ class SweetTooth_ShortcodeClient
    public function getCustomerBalance($atts)
    {
       extract( shortcode_atts( array(
-               'no_login'     => 'Please login to see see your points balance.',
-               'zero_points'  => '',
-               'label'        => "Points"
+               'no_login'         => 'Please login to see see your points balance.',
+               'zero_points'      => '',
+               'label'            => "Points",
+               'wrapper_class'    => "st_points_balance" // HTML class for the <span> element to wrap this block in. No wrapper if none specified.
       ), $atts ) );
        
       $balance = $this->_getSweetToothClient()->getCustomerBalance();
@@ -49,7 +50,14 @@ class SweetTooth_ShortcodeClient
           return $zero_points;
       }
       
-      return "{$balance} {$label}";
+      if (empty($wrapper_class)){
+          return "{$balance} {$label}";
+      }
+      
+      return "<span class='{$wrapper_class}'>
+                  <span class='{$wrapper_class}_amount'>{$balance}</span>
+                  <span class='{$wrapper_class}_label'>{$label}</span>
+              </span>";
    }
    
    public function getCouponRedemptionBlock($atts)
@@ -61,7 +69,8 @@ class SweetTooth_ShortcodeClient
                'form_id'          => "sweettooth_customer_coupon_redemption",
                'wrapper_id'       => "",    // ID of <div> element to wrap this block in. No wrapper if none specified.
                'options_class'    => "st_redemption_options",
-               'options_name'     => "st_redemption_options",               
+               'options_name'     => "st_redemption_options",
+               'balance_class'    => "st_points_balance"  // HTML class to update new points balance with after a redemption               
        ), $atts ) );
        
        $balance = $this->_getSweetToothClient()->getCustomerBalance();
@@ -89,7 +98,8 @@ class SweetTooth_ShortcodeClient
                        'form_id'       => $form_id,
                        'wrapper_id'    => $wrapper_id,
                        'options_class' => $options_class,
-                       'options_name'  => $options_name                       
+                       'options_name'  => $options_name,
+                       'balance_class' => $balance_class                                              
                ));
            }
            

@@ -11,10 +11,20 @@ require_once ( 'lib/pest/PestJSON.php' );
 class SweetTooth_ApiClient
 {    
     /**
-     * @todo Move these to Options
+     * @var string     
+     * @example "https://api.sweettoothloyalty.com/"
+     * @todo Move to Options Interface
      */
-    protected $apiUrl = 'https://dev-api.sweettoothloyalty.com/';
-    protected $apiKey = '233f162ac5bce350e934dfefd87200df';
+    protected $apiUrl = '';
+    
+    /**
+     * @var string
+     * @example "233f162ac5bce350e934dfefd87200df"
+     * @todo Move to Options Interface
+     */
+    protected $apiKey = '';
+    
+    
     
     /**
      * Instance of RESTful Client (cURL wrapper)
@@ -24,7 +34,6 @@ class SweetTooth_ApiClient
     
     /**
      * Overwrites PestJSON Constructor 
-     * @param unknown_type $base_url
      */
     public function __construct()
     {        

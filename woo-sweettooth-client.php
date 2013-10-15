@@ -7,6 +7,9 @@
  * Author: Sweet Tooth Inc.
  * Author URI: http://www.sweettoothhq.com
  * License: GPL2 
+ * Requires at least: 2.7
+ * Tested up to: 3.6.1
+ * Requires WooCommerce (Tested on 2.0.14)
  */
 
 /**
@@ -19,6 +22,7 @@ add_action( 'plugins_loaded', 'init_sweettooth' );
  * Entry point into the plugin.
  */
 function init_sweettooth() {
+    
     /**
      * Check if WooCommerce is active
      **/

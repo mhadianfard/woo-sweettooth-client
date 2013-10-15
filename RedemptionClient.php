@@ -102,7 +102,8 @@ class SweetTooth_RedemptionClient
             $couponCode = $this->createCopoun($redemptionOptions[$selectedOption]);
             
             $response['success'] = true;
-            $response['couponCode'] = $couponCode;
+            $response['coupon_code'] = $couponCode;
+            $response['new_balance'] = $customerBalance + $pointsToDeduct;
             
         } catch (Exception $e){
             $response['success'] = false;
@@ -222,7 +223,7 @@ class SweetTooth_RedemptionClient
     public function createCopoun($redemptionOption)
     {
         // Coupon Code is a function of the current system time
-        $coupon_code = base64_encode(time());                
+        $coupon_code = base64_encode(time());
         
         $amount = $redemptionOption['coupon_amount'];
         $discount_type = $redemptionOption['discount_type'];        
