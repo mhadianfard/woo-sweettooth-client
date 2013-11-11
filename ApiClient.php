@@ -15,14 +15,15 @@ class SweetTooth_ApiClient
      * @example "https://api.sweettoothloyalty.com/"
      * @todo Move to Options Interface
      */
-    protected $apiUrl = '';
+    protected $apiUrl = 'https://dev-api.sweettoothloyalty.com/v1';
     
     /**
      * @var string
      * @example "233f162ac5bce350e934dfefd87200df"
      * @todo Move to Options Interface
      */
-    protected $apiKey = '';
+    protected $apiKey = 'docs_api_key';
+    protected $apiSecret = 'docs_api_secret';
     
     
     
@@ -38,7 +39,7 @@ class SweetTooth_ApiClient
     public function __construct()
     {        
         $restClient = $this->getRestClient();
-        $restClient->setupAuth($this->apiKey, "");
+        $restClient->setupAuth($this->apiKey, $this->apiSecret);
     }
     
     /**
@@ -79,16 +80,12 @@ class SweetTooth_ApiClient
      * 
      * @return array containing server response
      */
-    public function sendEvent($event_type, $customer, $data = null, $external_id = null, $sources = null)
+    public function sendEvent($event_type, $customer, $data = null, $sources = null)
     {
         if (empty($event_type)){
             throw Exception ('Missing event type');
         }
 
-        // Start building out our event array
-        $event = array('event_type'   => $event_type);
-
-        
         // Data must be an array, even if it's empty.
         if (empty($data)){
             $data = array();
@@ -104,9 +101,16 @@ class SweetTooth_ApiClient
         } else {
             $data = array($data);
         }
+
+        $event = array();
         
-        $event['data'] = $data;
-        
+        // Setting the data elements first, as they might be over-ridden by more imporant keys:
+        foreach($data as $key => $val) {
+          $event[$key] = $val;
+        }
+
+        // Start building out our event array
+        $event = array('event_type'   => $event_type);
         
         // Send full customer details or remote customer id
         if (empty($customer)){
@@ -131,17 +135,13 @@ class SweetTooth_ApiClient
         }
 
        
-        if (!empty($external_id)){
-            $event['external_id'] = $external_id;
-        }
-                
         if (!empty($sources)) {
             if (!is_array($sources)){
                 $sources = array($sources);
             }
             $event['sources'] = $sources;
         }
-        
+
         return $this->getRestClient()->post('/events', $event);        
     }
     
@@ -160,6 +160,20 @@ class SweetTooth_ApiClient
     {
         return $this->getRestClient()->get("/customers/{$email}"); 
     }
+
+    /**
+     * Accesses the server to get customer data for the specified remote id.
+     * This method should be used when possible instead of getCusotmerByEmail,
+     * as the remoteId is a more accurate identifier than an email address.
+     *  
+     * @throws Exception. If there's a problem with the transmission. 
+     * @param string $email
+     * @return array response
+     */
+    public function getCustomerByRemoteId($remoteId)
+    {
+        return $this->getRestClient()->get("/customers/{$remoteId}");
+    }
     
     /**
      * Accesses the server to add a points transaction to the specified customer.
@@ -171,13 +185,24 @@ class SweetTooth_ApiClient
      * @return array response.
      * @throws Exception if there's a problem creating this transaction.
      */
-    public function addPointsTransaction($remote_customer_id, $points_change, $status = "completed", $data = array())
+    public function createRedemption($remote_customer_id, $points_amount, $redemption_option_id)
     {
-        return $this->getRestClient()->post("/customers/{$remote_customer_id}/points_transactions", array(
-                    'points_change'   => $points_change,
-                    'status'          => $status,
-                    'data'            => $data
+        return $this->getRestClient()->post("/customers/{$remote_customer_id}/redemptions", array(
+                    'points_amount'             => $points_amount,
+                    'redemption_option_id'      => $redemption_optio_id
         ));
+    }
+
+    /**
+     * Accesses the server to create a customer using the data in the given customer
+     * array.
+     * @param $customer_array. Data to be used to create the new customer record.
+     * @return array response.
+     * @throws Exeption if there's a problem creating the customer.
+     */
+    public function createCustomer($customer_array)
+    {
+        return $this->getRestClient()->post("/customers/", $customer_array);
     }
 }
 ?>

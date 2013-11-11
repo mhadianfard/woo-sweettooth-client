@@ -10,6 +10,9 @@
  */
 class SweetTooth
 {
+    
+    const REMOTE_ID_META_FIELD = 'st_loyalty_remote_customer_id';
+
     /**
      * Stores a singleton reference of this class.
      * 
@@ -181,6 +184,12 @@ class SweetTooth
      */
     public function getCustomerRemoteId()
     {
+        if (is_user_logged_in()) {
+          if ($remote_id = get_user_meta(wp_get_current_user()->ID, 'st_loyalty_remote_customer_id')) {
+            return $remote_id;
+          }
+        }
+
         $customerData = $this->getRemoteCustomerData();
         if ($customerData === false || !isset($customerData['id'])){
             return false;
@@ -188,6 +197,36 @@ class SweetTooth
     
         return $customerData['id'];
     }    
+
+    /**
+     * Access the Sweet Tooth server to create a customer corresponding to the currently
+     * logged in WP User.
+     *
+     * @return boolean, true if a customer was created.
+     */
+    public function createCurrentCustomer()
+    {
+      // Bail early if no user is logged in (to WP) or we are able to retrieve
+      // customer data from Sweet Tooth Loyalty for the logged in user (exists).
+      if (!is_user_logged_in() || $this->getRemoteCustomerData()) {
+        return false;
+      }
+
+      $current_user = wp_get_current_user();
+      $customer = array(
+        'first_name' => $current_user->user_firstname,
+        'last_name' => $current_user->user_lastname,
+        'email' => $current_user->user_email
+      );
+
+      try {
+        $this->_remoteCustomerData = $this->getApiClient()->createCustomer($customer);
+        update_user_meta($current_user->ID, SweetTooth::REMOTE_ID_META_FIELD, $this->_remoteCustomerData['id']);
+        return true;
+      } catch (Exception $e) {
+        error_log("Problem createing customer. " . $e->getMessage());
+      } 
+    }
 
     /**
      * Accesses the Sweet Tooth server to get any information about the customer
@@ -215,12 +254,16 @@ class SweetTooth
                 
                 // If there's someone logged in right now
                 if (!empty( $currentUserId )){        
-                    $email = $currentUser->user_email;
-                    if (empty($email)){
-                        throw new Exception("No email address for current customer.");
+                    if ($remoteId = get_user_meta($currentUserId, SweetTooth::REMOTE_ID_META_FIELD, true)) {
+                      $this->_remoteCustomerData = $this->getApiClient()->getCustomerByRemoteId($remoteId);
+                    } else {
+                      $email = $currentUser->user_email;
+                      if (empty($email)){
+                          throw new Exception("No email address for current customer.");
+                      }
+                              
+                      $this->_remoteCustomerData = $this->getApiClient()->getCustomerByEmail($email);                    
                     }
-                            
-                    $this->_remoteCustomerData = $this->getApiClient()->getCustomerByEmail($email);                    
                 }
         
             } catch (Exception $e){

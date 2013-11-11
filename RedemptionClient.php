@@ -91,7 +91,7 @@ class SweetTooth_RedemptionClient
             $remoteCustomerId = $sweettooth->getCustomerRemoteId();
             $pointsToDeduct = (-1) * intval($redemptionOptions[$selectedOption]['points_redemption']);
             try {
-                $reponse = $sweettooth->getApiClient()->addPointsTransaction($remoteCustomerId,  $pointsToDeduct);
+                $reponse = $sweettooth->getApiClient()->createRedemption($remoteCustomerId,  $pointsToDeduct, $selectedOption);
                 
             } catch (Exception $e){
                 // Original exception probably contains data we can't share with the customer. Throw another one.

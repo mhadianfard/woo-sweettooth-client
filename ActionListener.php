@@ -57,11 +57,13 @@ class SweetTooth_ActionListener
     
             $response = $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
             
+            /*
+             * If a user is logged in AND we got back a customer_id (we should always
+             * get back a customer_id) store this as metadata on the customer for
+             * future reference.
+             */
             if (!empty($customer_id) && isset($response['customer_id'])) {
-               /**
-                * @todo Great idea to save the remote customer id somewhere locally so we can do redemptions with one API call.
-                *         $response['customer_id'] will contain the customer id on Sweet Tooth servers.
-                */
+               update_user_meta($customer_id, SweetTooth::REMOTE_ID_META_FIELD, $response['customer_id']);
             }
             
             /**

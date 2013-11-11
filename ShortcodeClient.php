@@ -40,6 +40,11 @@ class SweetTooth_ShortcodeClient
                'wrapper_class'    => "st_points_balance" // HTML class for the <span> element to wrap this block in. No wrapper if none specified.
       ), $atts ) );
        
+      $customer = $this->_getSweetToothClient()->getRemoteCustomerData();
+      if (!$customer) {
+        $this->_getSweetToothClient()->createCurrentCustomer();
+      }
+
       $balance = $this->_getSweetToothClient()->getCustomerBalance();
       
       if ($balance === false) {
@@ -73,9 +78,17 @@ class SweetTooth_ShortcodeClient
                'balance_class'    => "st_points_balance"  // HTML class to update new points balance with after a redemption               
        ), $atts ) );
        
+       if ( !is_user_logged_in() ) {
+           return $no_login;
+       }
+
+       $customer = $this->_getSweetToothClient()->getRemoteCustomerData();
+       if (!$customer) {
+         $this->_getSweetToothClient()->createCurrentCustomer();
+       }
+
        $balance = $this->_getSweetToothClient()->getCustomerBalance();
        if ($balance === false){
-           return $no_login;
            
        } else {
            $redemptionOptions = $this->_getSweetToothClient()->getRedemptionClient()->getEligibleRedemptionOptions($balance);
