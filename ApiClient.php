@@ -16,17 +16,7 @@ class SweetTooth_ApiClient
      * @todo Move to Options Interface
      */
     protected $apiUrl = 'https://dev-api.sweettoothloyalty.com/v1';
-    
-    /**
-     * @var string
-     * @example "233f162ac5bce350e934dfefd87200df"
-     * @todo Move to Options Interface
-     */
-    #protected $apiKey = 'docs_api_key';
-    #protected $apiSecret = 'docs_api_secret';
-    
-    
-    
+
     /**
      * Instance of RESTful Client (cURL wrapper)
      * @var PestJSON
