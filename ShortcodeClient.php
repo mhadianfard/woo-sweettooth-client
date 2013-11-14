@@ -82,17 +82,7 @@ class SweetTooth_ShortcodeClient
            return $no_login;
        }
 
-       $customer = $this->_getSweetToothClient()->getRemoteCustomerData();
-       if (!$customer) {
-         $this->_getSweetToothClient()->createCurrentCustomer();
-       }
-
-       $balance = $this->_getSweetToothClient()->getCustomerBalance();
-       if ($balance === false){
-           
-       } else {
-           $redemptionOptions = $this->_getSweetToothClient()->getRedemptionClient()->getEligibleRedemptionOptions($balance);
-       }
+       $redemptionOptions = $this->_getSweetToothClient()->getRedemptionClient()->getEligibleRedemptionOptions();
        
        if (empty($redemptionOptions)){
            return $no_options;

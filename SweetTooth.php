@@ -77,7 +77,6 @@ class SweetTooth
     {
         $this->getActionListener()->setupActions();
         $this->getShortcodeClient()->setupShortcodes();
-        $this->getRedemptionClient()->setupRedemptionOptions();
 
         return $this;
     }
@@ -185,7 +184,7 @@ class SweetTooth
     public function getCustomerRemoteId()
     {
         if (is_user_logged_in()) {
-          if ($remote_id = get_user_meta(wp_get_current_user()->ID, 'st_loyalty_remote_customer_id')) {
+          if ($remote_id = get_user_meta(wp_get_current_user()->ID, self::REMOTE_ID_META_FIELD)) {
             return $remote_id;
           }
         }
@@ -221,7 +220,7 @@ class SweetTooth
 
       try {
         $this->_remoteCustomerData = $this->getApiClient()->createCustomer($customer);
-        update_user_meta($current_user->ID, SweetTooth::REMOTE_ID_META_FIELD, $this->_remoteCustomerData['id']);
+        update_user_meta($current_user->ID, self::REMOTE_ID_META_FIELD, $this->_remoteCustomerData['id']);
         return true;
       } catch (Exception $e) {
         error_log("Problem createing customer. " . $e->getMessage());

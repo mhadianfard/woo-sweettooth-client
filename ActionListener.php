@@ -46,13 +46,15 @@ class SweetTooth_ActionListener
                  $customer['email'] = $order->billing_email;
     
             } else {
-                /**
-                 * The customer has an account with us.
-                 */
-                 $user = get_user_by('id', $customer_id);
-                 $customer['first_name'] = $user->first_name;
-                 $customer['last_name'] = $user->last_name;
-                 $customer['email'] = $user->user_email;
+                if (!$customer = get_user_meta($customer_id, SweetTooth::REMOTE_ID_META_FIELD)) {
+                    /**
+                     * The customer has an account with us.
+                     */
+                     $user = get_user_by('id', $customer_id);
+                     $customer['first_name'] = $user->first_name;
+                     $customer['last_name'] = $user->last_name;
+                     $customer['email'] = $user->user_email;
+                }
             }
 
             if (method_exists($order, 'toArray')) {
@@ -69,7 +71,7 @@ class SweetTooth_ActionListener
              * get back a customer_id) store this as metadata on the customer for
              * future reference.
              */
-            if (!empty($customer_id) && isset($response['customer_id'])) {
+            if (!empty($customer_id) && isset($response['customer_id']) && (string)$customer != (string)$response['customer_id']) {
                update_user_meta($customer_id, SweetTooth::REMOTE_ID_META_FIELD, $response['customer_id']);
             }
             

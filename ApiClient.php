@@ -204,5 +204,24 @@ class SweetTooth_ApiClient
     {
         return $this->getRestClient()->post("/customers/", $customer_array);
     }
+
+    /**
+     * Access the server and return an array of redemption options, optionally filtered
+     * by those that the given remote customer id can access.
+     *
+     * @throws Exception. If there's a problem accessing the Sweet Tooth API
+     * @param integer $remote_customer_id. If given filters redemption options by those
+     * available to this customer.
+     * return array response
+     */
+    public function getRedemptionOptions($remote_customer_id = null)
+    {
+      $filter_string = "";
+      if ($remote_customer_id) {
+        $filter_string = "?customer_id=" . $remote_customer_id;
+      }
+      $options_collection = $this->getRestClient()->get("/redemption_options" . $filter_string);
+      return $options_collection['_contents'];
+    }
 }
 ?>
