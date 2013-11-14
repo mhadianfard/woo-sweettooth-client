@@ -15,7 +15,7 @@ class SweetTooth_ApiClient
      * @example "https://api.sweettoothloyalty.com/"
      * @todo Move to Options Interface
      */
-    protected $apiUrl = 'https://dev-api.sweettoothloyalty.com/v1';
+    protected $apiUrl = 'https://api.sweettoothloyalty.com/v1';
 
     /**
      * Instance of RESTful Client (cURL wrapper)
