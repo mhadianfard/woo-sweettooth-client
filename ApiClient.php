@@ -189,7 +189,7 @@ class SweetTooth_ApiClient
     {
         return $this->getRestClient()->post("/customers/{$remote_customer_id}/redemptions", array(
                     'points_amount'             => $points_amount,
-                    'redemption_option_id'      => $redemption_optio_id
+                    'redemption_option_id'      => $redemption_option_id
         ));
     }
 
@@ -222,6 +222,11 @@ class SweetTooth_ApiClient
       }
       $options_collection = $this->getRestClient()->get("/redemption_options" . $filter_string);
       return $options_collection['_contents'];
+    }
+
+    public function getRedemptionOption($id)
+    {
+      return $this->getRestClient()->get("/redemption_options/" . $id);
     }
 }
 ?>

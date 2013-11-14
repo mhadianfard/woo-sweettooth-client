@@ -27,6 +27,7 @@ class SweetTooth_RedemptionClient
     {
         // Setup Ajax Action
         add_action('wp_ajax_sweettooth_customer_coupon_redemption', array($this, 'redeemAction'));
+        add_action('wp_ajax_nopriv_sweettooth_customer_coupon_redemption', array($this, 'redeemAction'));
     }
     
     /**
@@ -47,16 +48,10 @@ class SweetTooth_RedemptionClient
             }
             
             $sweettooth = SweetTooth::getInstance();
-            $redemptionOptions = $this->getEligibleRedemptionOptions();
             $selectedOptionId = $_REQUEST['selected'];
-            
-            if (!array_key_exists($selectedOptionId, $redemptionOptions)){
-                throw new Exception("You are not elligble for the selected option.");
-            }
+            $selectedOption = $this->getRedemptionOption($selectedOptionId);
             
             $remoteCustomerId = $sweettooth->getCustomerRemoteId();
-
-            $selectedOption = $redemptionOptions[$selectedOptionId];
             /**
              * Right now this plugin only understands 'fixed points' type redemption
              * options, where the customer exchanges a fixed number of points for
@@ -69,11 +64,15 @@ class SweetTooth_RedemptionClient
               error_log("Customer selected redemption option " . $redemptionOptionId . " which has a points_exchange type of " . $selectedOption['points_exchange']['type'] . ". Unfortunately this plugin doesn't know how to handle this type of redemption :(");
               throw new Exception("You are not elligible for the selected option.");
             }
+            if ($selectedOption['redemption_method']['type'] != 'woo_commerce_coupon') {
+              error_log("Customer selected redemption option " . $redemptionOptionId . " which has a redemption method type of " . $selectedOption['redemption_method']['type'] . ". Unfortunately this plugin doesn't know how to handle this type of redemption :(");
+              throw new Exception("You are not elligible for the selected option.");
+            }
 
-            $pointsToDeduct = (-1) * intval($redemptionOption['points_exchange']['points_amount']);
+            $pointsToDeduct = intval($selectedOption['points_exchange']['points_amount']);
 
             try {
-                $reponse = $sweettooth->getApiClient()->createRedemption($remoteCustomerId,  $pointsToDeduct, $selectedOptionId);
+                $response = $sweettooth->getApiClient()->createRedemption($remoteCustomerId,  $pointsToDeduct, $selectedOptionId);
                 
             } catch (Exception $e){
                 // Original exception probably contains data we can't share with the customer. Throw another one.
@@ -81,11 +80,11 @@ class SweetTooth_RedemptionClient
                 throw new Exception("Unable to deduct points from your Sweet Tooth account.");
             }                    
             
-            $couponCode = $this->createCopoun($response);
+            $couponCode = $this->createCopoun($response, $selectedOption['name']);
             
             $response['success'] = true;
             $response['coupon_code'] = $couponCode;
-            $response['new_balance'] = $sweettooth->getCustomerBalance() + $pointsToDeduct;
+            $response['new_balance'] = $sweettooth->getCustomerBalance();
             
         } catch (Exception $e){
             $response['success'] = false;
@@ -106,17 +105,22 @@ class SweetTooth_RedemptionClient
         $sweettooth = SweetTooth::getInstance();
         return $sweettooth->getApiClient()->getRedemptionOptions($sweettooth->getCustomerRemoteId());
     }
+
+    public function getRedemptionOption($redemptionOptionId)
+    {
+        $sweettooth = SweetTooth::getInstance();
+        return $sweettooth->getApiClient()->getRedemptionOption($redemptionOptionId);
+    }
     
-    public function createCopoun($redemptionOption)
+    public function createCopoun($redemptionOption, $couponDesc = null)
     {
         // Coupon Code is a function of the current system time
         $coupon_code = base64_encode(microtime());
         
-        $amount = $redemptionOption['coupon_amount'];
-        $discount_type = $redemptionOption['discount_type'];        
+        $method =  $redemptionOption['redemption_method'];
         $coupon = array(
                 'post_title'     => $coupon_code,
-                'post_content'   => $redemptionOption['option_label'],
+                'post_content'   => $couponDesc,
                 'post_status'    => 'publish',
                 'post_author'    => 1,
                 'post_type'		 => 'shop_coupon'
@@ -125,20 +129,15 @@ class SweetTooth_RedemptionClient
         $new_coupon_id = wp_insert_post( $coupon );
         
         // Add meta
-        update_post_meta( $new_coupon_id, 'discount_type', $discount_type );
-        update_post_meta( $new_coupon_id, 'coupon_amount', $amount );
-        update_post_meta( $new_coupon_id, 'individual_use', 'no' );
-        update_post_meta( $new_coupon_id, 'usage_limit', 1 );        
+        update_post_meta( $new_coupon_id, 'discount_type', $method['discount_type'] );
+        update_post_meta( $new_coupon_id, 'coupon_amount', $method['value'] );
+        update_post_meta( $new_coupon_id, 'individual_use', $method['individual_use'] ? "yes" : "no" );
+        update_post_meta( $new_coupon_id, 'usage_limit', (int)$method['usage_limit'] );        
         update_post_meta( $new_coupon_id, 'product_ids', '' );
         update_post_meta( $new_coupon_id, 'exclude_product_ids', '' );
-        update_post_meta( $new_coupon_id, 'expiry_date', '' );
-        update_post_meta( $new_coupon_id, 'apply_before_tax', 'yes' );
-        update_post_meta( $new_coupon_id, 'free_shipping', 'no' );
-        
-        // Override options with anything else which was explicitly mentioned
-        foreach ($redemptionOption['coupon_options'] as $option => $value){
-            update_post_meta( $new_coupon_id, $option, $value );
-        }
+        update_post_meta( $new_coupon_id, 'expiry_date', $method['expiry_date'] );
+        update_post_meta( $new_coupon_id, 'apply_before_tax', $method['apply_before_tax'] ? "yes" : "no" );
+        update_post_meta( $new_coupon_id, 'free_shipping', $method['free_shipping'] ? "yes" : "no" );
         
         return $coupon_code;
     }

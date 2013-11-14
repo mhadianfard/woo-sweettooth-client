@@ -77,6 +77,10 @@ class SweetTooth
     {
         $this->getActionListener()->setupActions();
         $this->getShortcodeClient()->setupShortcodes();
+        # Required so that a redemption client exists, allowing
+        # it to register it's ajax hooks. Without this ajax calls
+        # break!
+        $this->getRedemptionClient();
 
         return $this;
     }
@@ -184,7 +188,7 @@ class SweetTooth
     public function getCustomerRemoteId()
     {
         if (is_user_logged_in()) {
-          if ($remote_id = get_user_meta(wp_get_current_user()->ID, self::REMOTE_ID_META_FIELD)) {
+          if ($remote_id = get_user_meta(wp_get_current_user()->ID, self::REMOTE_ID_META_FIELD, true)) {
             return $remote_id;
           }
         }

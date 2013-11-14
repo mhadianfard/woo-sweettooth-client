@@ -46,7 +46,7 @@ class SweetTooth_ActionListener
                  $customer['email'] = $order->billing_email;
     
             } else {
-                if (!$customer = get_user_meta($customer_id, SweetTooth::REMOTE_ID_META_FIELD)) {
+                if (!$customer = get_user_meta($customer_id, SweetTooth::REMOTE_ID_META_FIELD, true)) {
                     /**
                      * The customer has an account with us.
                      */
