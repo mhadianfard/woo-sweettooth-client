@@ -54,7 +54,14 @@ class SweetTooth_ActionListener
                  $customer['last_name'] = $user->last_name;
                  $customer['email'] = $user->user_email;
             }
-    
+
+            if (method_exists($order, 'toArray')) {
+              $order = $order->toArray();
+            } else {
+              $order = (array) $order;
+            }
+            $order['external_id'] = $order_id;
+
             $response = $this->_getApiClient()->sendEvent('order', $customer, $order, $order_id);
             
             /*

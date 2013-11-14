@@ -72,7 +72,6 @@ class SweetTooth_ApiClient
      *         @type type $key 'email' (optional). Accepts string.
      *     }      
      * @param array|int|string $data (optional). Generic data to send with the event.
-     * @param string $external_id (optional). The WooCommerce Id of the event or dataset to be sent. 
      * @param array $sources (optional) {
      *     Array containing tags for the various sources of this event.
      *         @type type $value. Accepts string.        
@@ -98,8 +97,10 @@ class SweetTooth_ApiClient
                 $data = (array) $data;
             }
             
-        } else {
-            $data = array($data);
+        }
+
+        if ($data && !is_array($data)) {
+          throw new Exception("Trying to send an event but unable to convert given \$data into an array.");
         }
 
         $event = array();
@@ -110,7 +111,7 @@ class SweetTooth_ApiClient
         }
 
         // Start building out our event array
-        $event = array('event_type'   => $event_type);
+        $event['event_type'] = $event_type;
         
         // Send full customer details or remote customer id
         if (empty($customer)){
@@ -134,7 +135,6 @@ class SweetTooth_ApiClient
             $event['customer_id'] = $customer;
         }
 
-       
         if (!empty($sources)) {
             if (!is_array($sources)){
                 $sources = array($sources);
