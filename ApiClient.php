@@ -22,8 +22,8 @@ class SweetTooth_ApiClient
      * @example "233f162ac5bce350e934dfefd87200df"
      * @todo Move to Options Interface
      */
-    protected $apiKey = 'docs_api_key';
-    protected $apiSecret = 'docs_api_secret';
+    #protected $apiKey = 'docs_api_key';
+    #protected $apiSecret = 'docs_api_secret';
     
     
     
@@ -36,10 +36,10 @@ class SweetTooth_ApiClient
     /**
      * Overwrites PestJSON Constructor 
      */
-    public function __construct()
+    public function __construct($apiKey, $apiSecret)
     {        
         $restClient = $this->getRestClient();
-        $restClient->setupAuth($this->apiKey, $this->apiSecret);
+        $restClient->setupAuth($apiKey, $apiSecret);
     }
     
     /**

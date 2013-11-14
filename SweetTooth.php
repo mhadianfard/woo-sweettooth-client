@@ -12,6 +12,8 @@ class SweetTooth
 {
     
     const REMOTE_ID_META_FIELD = 'st_loyalty_remote_customer_id';
+    const API_KEY_OPT_NAME = 'st_api_key';
+    const API_SECRET_OPT_NAME = 'st_api_secret';
 
     /**
      * Stores a singleton reference of this class.
@@ -75,12 +77,21 @@ class SweetTooth
      */
     protected function _setupSweetToothClient()
     {
-        $this->getActionListener()->setupActions();
-        $this->getShortcodeClient()->setupShortcodes();
-        # Required so that a redemption client exists, allowing
-        # it to register it's ajax hooks. Without this ajax calls
-        # break!
-        $this->getRedemptionClient();
+      # getApiClient will return false if it can't be created
+      # or retrieved, eg if credentials aren't defined. In
+      # that case we don't do any other setup, so that the plugin
+      # esentially acts "deactivated" till an API key & secret
+      # are input and saved.
+        if ($this->getApiClient()) {
+          $this->getActionListener()->setupActions();
+          $this->getShortcodeClient()->setupShortcodes();
+          # Required so that a redemption client exists, allowing
+          # it to register it's ajax hooks. Without this ajax calls
+          # break!
+          $this->getRedemptionClient();
+        }
+
+        add_action( 'admin_menu', array($this, 'settings_menu'));
 
         return $this;
     }
@@ -93,8 +104,14 @@ class SweetTooth
      */
     public function getApiClient()
     {
+        $api_key = get_option(self::API_KEY_OPT_NAME);
+        $api_secret = get_option(self::API_SECRET_OPT_NAME);
+
+        if (!$api_key || !$api_secret) {
+          return false;
+        }
         if (!isset($this->_apiClient)){
-            $this->_apiClient = new SweetTooth_ApiClient();
+            $this->_apiClient = new SweetTooth_ApiClient($api_key, $api_secret);
         }
         
         return $this->_apiClient;
@@ -275,6 +292,75 @@ class SweetTooth
         }
     
         return $this->_remoteCustomerData;
+    }
+
+    public function settings_menu()
+    {
+      add_options_page( 'Sweet Tooth Loyalty Settings', 'Sweet Tooth Loyalty', 'manage_options', 'st-loyalty', array($this, 'st_loyalty_options'));
+    }
+
+    public function st_loyalty_options() 
+    {
+        //must check that the user has the required capability 
+        if (!current_user_can('manage_options'))
+        {
+            wp_die( __('You do not have sufficient permissions to access this page.') );
+        }
+
+        // variables for the field and option names 
+        $hidden_field_name = 'st_submit_hidden';
+        $api_key_field_name = 'st_api_key';
+        $api_secret_field_name = 'st_api_secret';
+        $api_key_opt_name = self::API_KEY_OPT_NAME;
+        $api_secret_opt_name = self::API_SECRET_OPT_NAME;
+
+        // Read in existing option value from database
+        $api_key = get_option( $api_key_opt_name );
+        $api_secret = get_option( $api_secret_opt_name );
+
+        // See if the user has posted us some information
+        // If they did, this hidden field will be set to 'Y'
+        if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
+            // Read their posted value
+            $api_key = $_POST[ $api_key_field_name ];
+            $api_secret = $_POST[ $api_secret_field_name ];
+
+            // Save the posted value in the database
+            update_option( $api_key_opt_name, $api_key );
+            update_option( $api_secret_opt_name, $api_secret );
+
+            // Put an settings updated message on the screen
+            echo '<div class="updated"><p><strong>'. _e('settings saved.', 'st-loyalty' ).'</strong></p></div>';
+        }
+
+        // Now display the settings editing screen
+
+        echo '<div class="wrap">';
+
+        // header
+
+        echo "<h2>" . __( 'Sweet Tooth Loyalty Settings', 'st-loyalty' ) . "</h2>";
+
+        // settings form
+    
+        ?>
+
+        <form name="form1" method="post" action="">
+            <input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
+            <p><?php _e("Channel API Key:", 'st-loyalty' ); ?> 
+            <input type="text" name="<?php echo $api_key_field_name; ?>" value="<?php echo $api_key; ?>" size="20">
+            </p>
+
+            <p><?php _e("Channel API Secret:", 'st-loyalty' ); ?> 
+            <input type="text" name="<?php echo $api_secret_field_name; ?>" value="<?php echo $api_secret; ?>" size="20">
+            </p>
+            <p class="submit">
+            <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />
+            </p>
+
+        </form>
+        </div>
+<?php
     }
 }
 
